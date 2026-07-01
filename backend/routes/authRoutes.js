@@ -1,10 +1,28 @@
 const express = require("express");
 const router = express.Router();
 
-const { register, login } = require("../controllers/authController");
+const {
+    register,
+    login,
+    profile
+} = require("../controllers/authController");
 
-const { registerValidation } = require("../validators/authValidator");
+const {
+    verifyToken
+} = require("../middleware/authMiddleware");
+
+const {
+    registerValidation
+} = require("../validators/authValidator");
+
 const validate = require("../middleware/validate");
+
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication
+ *   description: Authentication APIs
+ */
 
 /**
  * @swagger
@@ -33,6 +51,27 @@ router.post(
  *       200:
  *         description: Login successful
  */
-router.post("/login", login);
+router.post(
+    "/login",
+    login
+);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     summary: Get Logged-in User Profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User Profile
+ */
+router.get(
+    "/profile",
+    verifyToken,
+    profile
+);
 
 module.exports = router;

@@ -119,82 +119,50 @@ exports.autoAssign = async (req, res) => {
 
         const order = await Order.findById(req.params.id);
 
-        const agents = await User.find({
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order Not Found"
+            });
+        }
 
+        const agent = await User.findOne({
             role: "agent",
-
-            isAvailable: true,
-
-            zone: order.pickupZone
-
+            isAvailable: true
         });
 
-        if (agents.length === 0) {
-
+        if (!agent) {
             return res.status(404).json({
-
+                success: false,
                 message: "No Agent Available"
-
             });
-
         }
 
-        let nearest = agents[0];
-
-        let min = Number.MAX_VALUE;
-
-        for (const agent of agents) {
-
-            const d = getDistance(
-
-                order.location?.lat || 0,
-
-                order.location?.lng || 0,
-
-                agent.location.lat,
-
-                agent.location.lng
-
-            );
-
-            if (d < min) {
-
-                min = d;
-
-                nearest = agent;
-
-            }
-
-        }
-
-        order.agent = nearest._id;
-
+        order.agent = agent._id;
         order.status = "Assigned";
 
         order.trackingHistory.push({
-
             status: "Assigned",
-
-            actor: "System"
-
+            actor: req.user.id,
+            remarks: "Auto Assigned"
         });
 
         await order.save();
 
-        nearest.isAvailable = false;
+        agent.isAvailable = false;
+        await agent.save();
 
-        await nearest.save();
+        res.json({
+            success: true,
+            message: "Agent Assigned Successfully",
+            order
+        });
 
-        res.json(order);
-
-    }
-
-    catch (err) {
+    } catch (err) {
 
         res.status(500).json({
-
+            success: false,
             message: err.message
-
         });
 
     }
@@ -262,59 +230,7 @@ exports.dashboard = async (req, res) => {
     }
 
 };
-exports.getAllOrders = async (req, res) => {
 
-    try {
-
-        const filter = {};
-
-        if (req.query.status) {
-
-            filter.status = req.query.status;
-
-        }
-
-        if (req.query.zone) {
-
-            filter.pickupZone = req.query.zone;
-
-        }
-
-        if (req.query.agent) {
-
-            filter.agent = req.query.agent;
-
-        }
-
-        const orders = await Order.find(filter)
-
-            .populate("customer", "name email")
-
-            .populate("agent", "name");
-
-        res.json({
-
-            success: true,
-
-            count: orders.length,
-
-            orders
-
-        });
-
-    } catch (err) {
-
-        res.status(500).json({
-
-            success: false,
-
-            message: err.message
-
-        });
-
-    }
-
-};
 exports.overrideStatus = async (req, res) => {
 
     try {

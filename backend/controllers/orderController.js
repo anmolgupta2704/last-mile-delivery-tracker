@@ -20,9 +20,7 @@ exports.createOrder = async (req, res) => {
         } = req.body;
 
         // Find Zones Automatically
-        const pickupZone = await findZone(pickupAddress);
-        const dropZone = await findZone(dropAddress);
-
+        const { pickupZone, dropZone } = req.body;
         if (!pickupZone || !dropZone) {
             return res.status(400).json({
                 success: false,
