@@ -1,16 +1,34 @@
-export default function DashboardCard({ title, value, color }) {
+export default function DashboardCard({
+    title,
+    value,
+    color,
+    icon
+}) {
 
     return (
 
-        <div className="col-md-3">
+        <div className="col-lg-3 col-md-6">
 
-            <div className={`card text-white bg-${color} mb-3`}>
+            <div
+                className={`card border-0 shadow bg-${color} text-white h-100`}
+                style={{borderRadius:"18px"}}
+            >
 
-                <div className="card-body">
+                <div className="card-body d-flex justify-content-between align-items-center">
 
-                    <h5>{title}</h5>
+                    <div>
 
-                    <h2>{value}</h2>
+                        <h6>{title}</h6>
+
+                        <h2>{value}</h2>
+
+                    </div>
+
+                    <div>
+
+                        {icon}
+
+                    </div>
 
                 </div>
 

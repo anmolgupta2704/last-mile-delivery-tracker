@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
-
 import API from "../api/axios";
+import Navbar from "../components/Navbar";
 import Progress from "../components/Progress";
 import TrackingTimeline from "../components/TrackingTimeline";
+import {
+    FaBox,
+    FaUser,
+    FaTruck,
+    FaMapMarkerAlt,
+    FaMoneyBillWave
+} from "react-icons/fa";
 
 const socket = io("http://localhost:5000");
 
 export default function OrderDetails() {
 
     const { id } = useParams();
-    const navigate = useNavigate();
 
     const [order, setOrder] = useState(null);
 
@@ -21,23 +27,13 @@ export default function OrderDetails() {
 
         socket.emit("join-order", id);
 
-        socket.on("status-update", (data) => {
-
-            if (data.orderId === id) {
-
-                loadOrder();
-
-            }
-
+        socket.on("status-update", () => {
+            loadOrder();
         });
 
-        return () => {
+        return () => socket.off("status-update");
 
-            socket.off("status-update");
-
-        };
-
-    }, [id]);
+    }, []);
 
     const loadOrder = async () => {
 
@@ -45,11 +41,9 @@ export default function OrderDetails() {
 
             const res = await API.get(`/orders/${id}`);
 
-            setOrder(res.data.order || res.data);
+            setOrder(res.data.order);
 
-        }
-
-        catch (err) {
+        } catch (err) {
 
             console.log(err);
 
@@ -57,110 +51,263 @@ export default function OrderDetails() {
 
     };
 
-    if (!order) {
-
-        return (
-
-            <div className="container mt-5">
-
-                <h3 className="text-center">
-
-                    Loading...
-
-                </h3>
-
-            </div>
-
-        );
-
-    }
+    if (!order)
+        return <h2 className="text-center mt-5">Loading...</h2>;
 
     return (
 
-        <div className="container mt-4">
+        <>
+            <Navbar/>
 
-            <div className="card shadow p-4">
+            <div className="container my-4">
 
-                <h2>Order Details</h2>
+                {/* Header */}
 
-                <hr />
+                <div className="card shadow border-0 mb-4">
 
-                <Progress status={order.status} />
+                    <div className="card-body d-flex justify-content-between align-items-center">
 
-                <hr />
+                        <div>
 
-                <div className="row">
+                            <h3>
 
-                    <div className="col-md-6">
+                                <FaBox className="me-2"/>
 
-                        <h5>
-                            <b>Status :</b> {order.status}
-                        </h5>
+                                Order #{order._id.slice(-8)}
 
-                        <h5>
-                            <b>Charge :</b> ₹{order.deliveryCharge}
-                        </h5>
+                            </h3>
 
-                        <h5>
-                            <b>Payment :</b> {order.paymentType}
-                        </h5>
+                            <small className="text-muted">
 
-                    </div>
+                                Created on {" "}
 
-                    <div className="col-md-6">
+                                {new Date(order.createdAt).toLocaleString()}
 
-                        <h5>
-                            <b>Agent :</b>{" "}
-                            {order.agent?.name || "Not Assigned"}
-                        </h5>
+                            </small>
 
-                        <h5>
-                            <b>Pickup :</b>{" "}
-                            {order.pickupAddress}
-                        </h5>
+                        </div>
 
-                        <h5>
-                            <b>Drop :</b>{" "}
-                            {order.dropAddress}
-                        </h5>
+                        <span className="badge bg-primary fs-6">
+
+                            {order.status}
+
+                        </span>
 
                     </div>
 
                 </div>
 
-                <hr />
+                {/* Progress */}
 
-                <TrackingTimeline
-                    tracking={order.trackingHistory}
-                />
+                <div className="card shadow border-0 mb-4">
 
-                {
+                    <div className="card-body">
 
-                    order.status === "Failed" && (
+                        <h5>Delivery Progress</h5>
 
-                        <button
+                        <Progress status={order.status}/>
 
-                            className="btn btn-danger mt-4"
+                    </div>
 
-                            onClick={() =>
+                </div>
 
-                                navigate(`/reschedule/${order._id}`)
+                <div className="row">
 
-                            }
+                    {/* Left */}
 
-                        >
+                    <div className="col-lg-8">
 
-                            Reschedule Delivery
+                        <div className="card shadow border-0 mb-4">
 
-                        </button>
+                            <div className="card-header bg-primary text-white">
 
-                    )
+                                <FaMapMarkerAlt className="me-2"/>
 
-                }
+                                Address Details
+
+                            </div>
+
+                            <div className="card-body">
+
+                                <p>
+
+                                    <strong>Pickup :</strong>
+
+                                    <br/>
+
+                                    {order.pickupAddress}
+
+                                </p>
+
+                                <hr/>
+
+                                <p>
+
+                                    <strong>Drop :</strong>
+
+                                    <br/>
+
+                                    {order.dropAddress}
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div className="card shadow border-0">
+
+                            <div className="card-header bg-success text-white">
+
+                                Tracking Timeline
+
+                            </div>
+
+                            <div className="card-body">
+
+                                <TrackingTimeline
+                                    tracking={order.trackingHistory}
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {/* Right */}
+
+                    <div className="col-lg-4">
+
+                        <div className="card shadow border-0 mb-3">
+
+                            <div className="card-body">
+
+                                <h5>
+
+                                    <FaTruck className="me-2"/>
+
+                                    Delivery
+
+                                </h5>
+
+                                <hr/>
+
+                                <p>
+
+                                    <strong>Payment</strong>
+
+                                    <br/>
+
+                                    {order.paymentType}
+
+                                </p>
+
+                                <p>
+
+                                    <strong>Order Type</strong>
+
+                                    <br/>
+
+                                    {order.orderType}
+
+                                </p>
+
+                                <p>
+
+                                    <strong>Status</strong>
+
+                                    <br/>
+
+                                    {order.status}
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <div className="card shadow border-0 mb-3">
+
+                            <div className="card-body">
+
+                                <h5>
+
+                                    <FaMoneyBillWave className="me-2"/>
+
+                                    Charges
+
+                                </h5>
+
+                                <hr/>
+
+                                <h3 className="text-success">
+
+                                    ₹ {order.deliveryCharge}
+
+                                </h3>
+
+                                <small>
+
+                                    Chargeable Weight
+
+                                    <br/>
+
+                                    {order.chargeableWeight} Kg
+
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                        <div className="card shadow border-0">
+
+                            <div className="card-body">
+
+                                <h5>
+
+                                    <FaUser className="me-2"/>
+
+                                    Agent
+
+                                </h5>
+
+                                <hr/>
+
+                                {
+
+                                    order.agent ?
+
+                                    <>
+
+                                        <h6>{order.agent.name}</h6>
+
+                                        <p>{order.agent.email}</p>
+
+                                    </>
+
+                                    :
+
+                                    <p className="text-danger">
+
+                                        Not Assigned
+
+                                    </p>
+
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
 
             </div>
 
-        </div>
+        </>
 
     );
 

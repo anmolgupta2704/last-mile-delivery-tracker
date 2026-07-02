@@ -1,14 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
-import StatusBadge from "../components/StatusBadge";
+import {
+    FaEye,
+    FaSearch,
+    FaCopy,
+    FaBoxOpen
+} from "react-icons/fa";
+import toast from "react-hot-toast";
 
 export default function Orders() {
 
-    const navigate = useNavigate();
-
     const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchOrders();
@@ -20,159 +26,237 @@ export default function Orders() {
 
             const res = await API.get("/orders");
 
-            setOrders(res.data.orders || res.data);
+            setOrders(res.data.orders || []);
 
         } catch (err) {
 
-            console.error(err);
-
-        } finally {
-
-            setLoading(false);
+            console.log(err);
 
         }
 
     };
 
-    if (loading) {
+    const filteredOrders = useMemo(() => {
 
-        return (
-
-            <div className="container mt-5 text-center">
-
-                <h4>Loading Orders...</h4>
-
-            </div>
-
+        return orders.filter(order =>
+            order._id.toLowerCase().includes(search.toLowerCase())
         );
 
-    }
+    }, [orders, search]);
+
+    const copyId = (id) => {
+
+        navigator.clipboard.writeText(id);
+
+        toast.success("Order ID Copied");
+
+    };
+
+    const badge = (status) => {
+
+        switch (status) {
+
+            case "Delivered":
+                return "success";
+
+            case "Assigned":
+                return "primary";
+
+            case "Created":
+                return "secondary";
+
+            case "Failed":
+                return "danger";
+
+            case "Rescheduled":
+                return "warning";
+
+            default:
+                return "dark";
+
+        }
+
+    };
 
     return (
 
-        <div className="container mt-4">
+        <div className="card border-0 shadow-lg">
 
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center">
 
-                <h2>My Orders</h2>
+                <h4 className="mb-0">
 
-                <button
-                    className="btn btn-success"
-                    onClick={fetchOrders}
-                >
-                    Refresh
-                </button>
+                    <FaBoxOpen className="me-2"/>
+
+                    My Orders
+
+                </h4>
+
+                <div className="input-group" style={{width:"280px"}}>
+
+                    <span className="input-group-text">
+
+                        <FaSearch/>
+
+                    </span>
+
+                    <input
+                        className="form-control"
+                        placeholder="Search Order ID..."
+                        value={search}
+                        onChange={(e)=>setSearch(e.target.value)}
+                    />
+
+                </div>
 
             </div>
 
-            <table className="table table-striped table-bordered table-hover shadow">
+            <div className="card-body">
 
-                <thead className="table-dark">
+                <div className="table-responsive">
 
-                    <tr>
+                    <table className="table table-hover align-middle">
 
-                        <th>Order ID</th>
-
-                        <th>Status</th>
-
-                        <th>Charge</th>
-
-                        <th>Payment</th>
-
-                        <th>Action</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    {
-
-                        orders.length === 0 ?
-
-                        (
+                        <thead className="table-primary">
 
                             <tr>
 
-                                <td
-                                    colSpan="5"
-                                    className="text-center"
-                                >
+                                <th>Order ID</th>
 
-                                    No Orders Found
+                                <th>Status</th>
 
-                                </td>
+                                <th>Charge</th>
+
+                                <th>Payment</th>
+
+                                <th>Created</th>
+
+                                <th>Action</th>
 
                             </tr>
 
-                        )
+                        </thead>
 
-                        :
+                        <tbody>
 
-                        (
+                            {
 
-                            orders.map((order) => (
+                                filteredOrders.length === 0 ?
 
-                                <tr key={order._id}>
+                                (
 
-                                    <td>
+                                    <tr>
 
-                                        {order._id.slice(-8)}
-
-                                    </td>
-
-                                    <td>
-
-                                        <StatusBadge
-                                            status={order.status}
-                                        />
-
-                                    </td>
-
-                                    <td>
-
-                                        ₹ {order.deliveryCharge}
-
-                                    </td>
-
-                                    <td>
-
-                                        {order.paymentType}
-
-                                    </td>
-
-                                    <td>
-
-                                        <button
-
-                                            className="btn btn-primary btn-sm"
-
-                                            onClick={() =>
-
-                                                navigate(`/orders/${order._id}`)
-
-                                            }
-
+                                        <td
+                                            colSpan="6"
+                                            className="text-center py-5"
                                         >
 
-                                            View Details
+                                            No Orders Found
 
-                                        </button>
+                                        </td>
 
-                                    </td>
+                                    </tr>
 
-                                </tr>
+                                )
 
-                            ))
+                                :
 
-                        )
+                                (
 
-                    }
+                                    filteredOrders.map(order => (
 
-                </tbody>
+                                        <tr key={order._id}>
 
-            </table>
+                                            <td>
+
+                                                <strong>
+
+                                                    {order._id.slice(-8)}
+
+                                                </strong>
+
+                                                <button
+
+                                                    className="btn btn-sm"
+
+                                                    onClick={()=>copyId(order._id)}
+
+                                                >
+
+                                                    <FaCopy/>
+
+                                                </button>
+
+                                            </td>
+
+                                            <td>
+
+                                                <span className={`badge bg-${badge(order.status)}`}>
+
+                                                    {order.status}
+
+                                                </span>
+
+                                            </td>
+
+                                            <td>
+
+                                                ₹ {order.deliveryCharge}
+
+                                            </td>
+
+                                            <td>
+
+                                                {order.paymentType}
+
+                                            </td>
+
+                                            <td>
+
+                                                {
+
+                                                    new Date(order.createdAt)
+
+                                                    .toLocaleDateString()
+
+                                                }
+
+                                            </td>
+
+                                            <td>
+
+                                                <button
+
+                                                    className="btn btn-primary btn-sm"
+
+                                                    onClick={()=>navigate(`/orders/${order._id}`)}
+
+                                                >
+
+                                                    <FaEye className="me-2"/>
+
+                                                    View
+
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+
+                                )
+
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
 
         </div>
 

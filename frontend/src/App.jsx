@@ -8,16 +8,13 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import AgentDashboard from "./pages/AgentDashboard";
 import Reschedule from "./pages/Reschedule";
+import Home from "./pages/Home";
 function App() {
 
     return (
 
         <Routes>
 
-            <Route
-                path="/"
-                element={<Login />}
-            />
  <Route
     path="/orders/:id"
     element={
@@ -25,6 +22,15 @@ function App() {
             <OrderDetails />
         </ProtectedRoute>
     }
+/>
+<Route
+    path="/"
+    element={<Home />}
+/>
+
+<Route
+    path="/login"
+    element={<Login />}
 />
 <Route
     path="/agent"
