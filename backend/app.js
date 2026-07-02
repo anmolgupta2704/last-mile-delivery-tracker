@@ -23,12 +23,9 @@ app.use(compression());
 app.use(helmet());
 
 app.use(cors({
-    origin: ["http://localhost:5173", "https://last-mile-delivery-tracker-two.vercel.app"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    origin: process.env.CLIENT_URL,
+    credentials: true
 }));
-
 app.use(express.json());
 
 app.use(morgan("dev"));
