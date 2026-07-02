@@ -97,6 +97,17 @@ const seed = async () => {
         });
 
         console.log("Users Seeded");
+await User.create({
+
+            name:"Customer",
+
+            email:"customer@gmail.com",
+
+            password,
+
+            role:"customer"
+
+        });
 
         // Zones
 

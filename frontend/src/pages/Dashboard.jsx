@@ -3,6 +3,7 @@ import ProfileCard from "../components/ProfileCard";
 import Statistics from "../components/Statistics";
 import CreateOrder from "./CreateOrder";
 import Orders from "./Orders";
+import Footer from "../components/Footer";
 import {
     FaTruck,
     FaClipboardList,
