@@ -19,14 +19,13 @@ exports.createOrder = async (req, res) => {
             orderType
         } = req.body;
 
-        // Find Zones Automatically
-        const { pickupZone, dropZone } = req.body;
-        if (!pickupZone || !dropZone) {
-            return res.status(400).json({
-                success: false,
-                message: "Unable to detect Pickup or Drop Zone"
-            });
-        }
+        // Try to detect zone automatically
+        let pickupZone = await findZone(pickupAddress);
+        let dropZone = await findZone(dropAddress);
+
+        // If zone not found, use Default
+        if (!pickupZone) pickupZone = "Default";
+        if (!dropZone) dropZone = "Default";
 
         // Calculate Charges
         const result = await calculateRate({
@@ -57,11 +56,9 @@ exports.createOrder = async (req, res) => {
             actualWeight,
 
             volumetricWeight: result.volumetricWeight,
-
             chargeableWeight: result.chargeableWeight,
 
             paymentType,
-
             orderType,
 
             deliveryCharge: result.deliveryCharge,

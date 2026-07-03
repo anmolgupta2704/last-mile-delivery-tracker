@@ -13,23 +13,30 @@ exports.calculateRate = async ({
 }) => {
 
     // Volumetric Weight
-    const volumetricWeight = (length * breadth * height) / 5000;
+    const volumetricWeight =
+        (Number(length) * Number(breadth) * Number(height)) / 5000;
 
     // Chargeable Weight
-    const chargeableWeight = Math.max(actualWeight, volumetricWeight);
+    const chargeableWeight = Math.max(
+        Number(actualWeight),
+        volumetricWeight
+    );
 
-    // Find Rate Card
-    const rate = await RateCard.findOne({
+    // Try to find Rate Card
+    let rate = await RateCard.findOne({
         pickupZone,
         dropZone,
         orderType
     });
 
-    if (!rate) {
-        throw new Error("Rate Card Not Found");
+    // If no rate card found, use default charge
+    let ratePerKg = 50;
+
+    if (rate) {
+        ratePerKg = rate.ratePerKg;
     }
 
-    let deliveryCharge = chargeableWeight * rate.ratePerKg;
+    let deliveryCharge = chargeableWeight * ratePerKg;
 
     // COD Charge
     if (paymentType === "COD") {
@@ -40,6 +47,8 @@ exports.calculateRate = async ({
 
         if (cod) {
             deliveryCharge += cod.charge;
+        } else {
+            deliveryCharge += 40; // Default COD charge
         }
     }
 
