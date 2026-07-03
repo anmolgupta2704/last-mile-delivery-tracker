@@ -6,9 +6,7 @@
 
 # Overview
 
-The Last Mile Delivery Tracker is a MERN Stack web application designed to automate delivery operations between customers, administrators, and delivery agents.
-
-The system enables customers to create delivery orders while administrators monitor operations and assign available delivery agents. Agents update delivery status in real time.
+The Last Mile Delivery Tracker is a full-stack MERN application designed to automate last-mile logistics operations. It enables customers to create delivery orders, administrators to manage deliveries and assign agents, and delivery agents to update delivery status in real time. The application uses JWT authentication, REST APIs, MongoDB Atlas, and Socket.IO to provide a secure and scalable delivery management platform.
 
 ---
 
@@ -37,48 +35,47 @@ The system enables customers to create delivery orders while administrators moni
 
 # Architecture Style
 
-- Client Server Architecture
+- Client-Server Architecture
 - RESTful APIs
 - JWT Authentication
-- Role Based Access Control (RBAC)
+- Role-Based Access Control (RBAC)
+- Real-Time Communication using Socket.IO
 
 ---
 
-# Components
+# System Components
 
 ## Frontend
 
-- Authentication
+- User Authentication
 - Customer Dashboard
 - Admin Dashboard
 - Agent Dashboard
-- Orders Module
-- Tracking Module
-- Analytics
-
----
+- Order Management
+- Order Tracking
+- Analytics Dashboard
 
 ## Backend
 
 ### Controllers
 
-- Authentication
-- Orders
-- Admin
-- Agent
+- Authentication Controller
+- Order Controller
+- Admin Controller
+- Agent Controller
 
 ### Middleware
 
 - JWT Authentication
-- Authorization
-- Validation
-- Error Handling
+- Role Authorization
+- Request Validation
+- Global Error Handler
 
 ### Database
 
-MongoDB Atlas
+MongoDB Atlas stores all application data.
 
-Collections
+Collections:
 
 - Users
 - Orders
@@ -92,29 +89,26 @@ Collections
 
 ## Customer
 
-- Register
-- Login
-- Create Order
-- Track Order
-- Reschedule Order
-
----
+- Register/Login
+- Create Delivery Orders
+- View Order History
+- Track Orders
+- Reschedule Failed Orders
 
 ## Admin
 
-- View Dashboard
+- Monitor Dashboard
 - View Analytics
-- Auto Assign Agent
 - Manage Orders
-- View Revenue
-
----
+- Auto Assign Agents
+- View Revenue Reports
 
 ## Agent
 
 - Login
 - View Assigned Orders
 - Update Delivery Status
+- Complete Deliveries
 
 ---
 
@@ -124,79 +118,50 @@ Collections
 
 ```
 name
-
 email
-
 password
-
 phone
-
 role
-
 zone
-
 location
-
 isAvailable
 ```
-
----
 
 ## Order
 
 ```
 customer
-
 agent
-
 pickupAddress
-
 dropAddress
-
 pickupZone
-
 dropZone
-
 deliveryCharge
-
 status
-
 trackingHistory
 ```
-
----
 
 ## Zone
 
 ```
 name
-
-pincode
+areas
+center
 ```
-
----
 
 ## Rate Card
 
 ```
 pickupZone
-
 dropZone
-
-basePrice
-
-pricePerKg
+orderType
+ratePerKg
 ```
-
----
 
 ## COD Charge
 
 ```
-minimum
-
-maximum
-
+orderType
 charge
 ```
 
@@ -208,15 +173,19 @@ Customer Login
 
 ↓
 
-JWT Generated
+JWT Token Generated
 
 ↓
 
-Customer Creates Order
+Create Order
 
 ↓
 
-Delivery Charges Calculated
+Zone Detection
+
+↓
+
+Rate Calculation
 
 ↓
 
@@ -224,23 +193,15 @@ Order Stored
 
 ↓
 
-Admin Dashboard
+Admin Assigns Agent
 
 ↓
 
-Auto Assign Agent
+Agent Updates Status
 
 ↓
 
-Agent Dashboard
-
-↓
-
-Update Delivery Status
-
-↓
-
-Customer Tracks Delivery
+Customer Tracks Order
 
 ---
 
@@ -267,29 +228,83 @@ Verify Token Middleware
 
 ↓
 
-Protected Route
+Protected API Access
 ```
+
+---
+
+# Rate Calculation Engine
+
+The delivery charge is calculated automatically whenever a customer creates a new order.
+
+1. The system calculates the volumetric weight using:
+
+```
+Volumetric Weight = (Length × Breadth × Height) / 5000
+```
+
+2. The chargeable weight is the maximum of Actual Weight and Volumetric Weight.
+
+3. The application searches the Rate Card collection using Pickup Zone, Drop Zone, and Order Type (B2B/B2C).
+
+4. Delivery Charge is calculated as:
+
+```
+Chargeable Weight × Rate Per Kg
+```
+
+5. If the payment method is Cash on Delivery (COD), an additional COD charge is added.
+
+6. The final delivery charge is stored in the order and displayed to the customer.
+
+---
+
+# Zone Detection Approach
+
+The application determines pickup and drop zones from the addresses entered by the customer.
+
+Initially, the entered address is compared with predefined service areas stored in the Zone collection.
+
+If a matching area is found, the corresponding zone is assigned automatically.
+
+If no predefined service area matches the address, the application assigns a default zone to ensure that orders from any location can still be created successfully. This improves usability and avoids unnecessary order rejection.
 
 ---
 
 # Auto Assignment Logic
 
-1. Find available agents.
-2. Match pickup zone.
-3. Calculate nearest distance.
-4. Assign nearest agent.
-5. Update order status.
+The administrator assigns delivery agents using the following process:
+
+1. Find available delivery agents.
+2. Match the pickup zone.
+3. Calculate the nearest available agent.
+4. Assign the order to that agent.
+5. Update the order status to **Assigned**.
+6. Notify the assigned agent through Socket.IO in real time.
 
 ---
 
-# Security
+# Failed Delivery Handling
+
+If a delivery cannot be completed, the delivery agent marks the order as **Failed**.
+
+The customer can request rescheduling from the dashboard.
+
+The system changes the order status to **Rescheduled**, removes the previous agent assignment, records the action in the tracking history, and makes the order available for reassignment.
+
+The administrator can then assign another available delivery agent to complete the delivery.
+
+---
+
+# Security Features
 
 - JWT Authentication
-- Password Hashing (bcrypt)
-- Helmet
-- CORS
+- Password Hashing using bcrypt
+- Helmet Security Headers
+- CORS Protection
 - Input Validation
 - Express Validator
+- Protected REST APIs
 
 ---
 
@@ -311,12 +326,18 @@ Database
 
 # Future Scope
 
+- Google Maps Integration
 - AI Route Optimization
-- Google Maps
-- Payment Gateway
+- Payment Gateway Integration
 - Push Notifications
-- SMS Alerts
+- SMS & Email Notifications
 - Mobile Application
-- Multi Warehouse Support
-- Route Prediction
-- Admin Reports
+- Multi-Warehouse Support
+- Advanced Analytics Dashboard
+- Route Prediction using Machine Learning
+
+---
+
+# Conclusion
+
+The Last Mile Delivery Tracker provides a secure, scalable, and modular logistics management solution. The application automates delivery charge calculation, zone detection, agent assignment, order tracking, and failed delivery management while maintaining a clean architecture. Its modular design allows future enhancements such as AI-based route optimization, live map tracking, and payment integration without major architectural changes.

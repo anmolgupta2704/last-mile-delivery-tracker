@@ -7,6 +7,7 @@ const User = require("../models/User");
 const Zone = require("../models/Zone");
 const RateCard = require("../models/RateCard");
 const CODCharge = require("../models/CODCharge");
+const Order = require("../models/Order");
 
 mongoose.connect(process.env.MONGO_URI);
 
@@ -18,6 +19,7 @@ const seed = async () => {
         await Zone.deleteMany();
         await RateCard.deleteMany();
         await CODCharge.deleteMany();
+        await Order.deleteMany();   
 
         const password = await bcrypt.hash("123456",10);
 
