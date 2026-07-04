@@ -1,6 +1,7 @@
 # 🚚 Last Mile Delivery Tracker
 
 A full-stack logistics management system that automates last-mile delivery operations. The application allows customers to create delivery orders, admins to manage and assign orders, and delivery agents to update delivery status in real time.
+> **Hosting Notice:** This application is hosted on the Render free tier. The backend server automatically spins down after periods of inactivity. It may take **50 to 60 seconds** for the initial load/authentication request to process while the server wakes up.
 
 ---
 
